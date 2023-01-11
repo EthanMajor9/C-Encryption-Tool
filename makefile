@@ -7,23 +7,26 @@
 #                  MyApp Example
 # =======================================================
 # FINAL BINARY Target
-./bin/myApp : ./obj/myApp.o ./obj/getUserInput.o
-	cc ./obj/myApp.o ./obj/getUserInput.o -o ./bin/myApp
+./bin/cryptoMagic : ./obj/main.o ./obj/decrypt.o ./obj/encrypt.o
+	cc ./obj/main.o ./obj/decrypt.o ./obj/encrypt.o -o ./bin/cryptoMagic
 #
 # =======================================================
 #                     Dependencies
-# =======================================================                     
-./obj/myApp.o : ./src/myApp.c ./inc/getUserInput.h
-	cc -g -c ./src/myApp.c -o ./obj/myApp.o
-
-./obj/getUserInput.o : ./src/getUserInput.c ./inc/getUserInput.h
-	cc -g -c ./src/getUserInput.c -o ./obj/getUserInput.o
-
+# =======================================================      
+./obj/main.o : ./src/main.c ./inc/globals.h
+	cc -g -c ./src/main.c -o ./obj/main.o
+	
+./obj/decrypt.o : ./src/decrypt.c ./inc/globals.h
+	cc -g -c ./src/decrypt.c -o ./obj/decrypt.o
+	
+./obj/encrypt.o : ./src/encrypt.c ./inc/globals.h
+	cc -g -c ./src/encrypt.c -o ./obj/encrypt.o
+	
 #
 # =======================================================
 # Other targets
 # =======================================================                     
-all : ./bin/myApp
+all : ./bin/cryptoMagic
 
 clean:
 	rm -f ./bin/*
