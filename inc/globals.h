@@ -2,5 +2,5 @@
 #include <string.h>
 #include <stdlib.h>
 
-const char * kEncryptModes[2] = {"-encrypt", "-decrypt"};
-
+const char* kEncryptModes[2] = {"-encrypt", "-decrypt"};
+const char* kFileExtensions[2] = {".crp", ".txt"}; 
