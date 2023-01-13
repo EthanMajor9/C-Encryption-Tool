@@ -9,13 +9,12 @@
 
 #include "../inc/globals.h"
 
-const char* kEncryptModes[2] = {"-encrypt", "-decrypt"};
-
 int main(int argc, char* argv[])
 {
-	char* cryptoMode = NULL;
-	char* filename = NULL;
-	FILE* fPtr = NULL;
+	char* infilename = NULL;
+	char* outfilename = NULL;
+	int cryptoMode = 0;
+	int retStatus = 0;
 	
 	// Check if any command line args were supplied
 	if(argc == 1)
@@ -24,88 +23,116 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		// Check if the crypto mode has been specified
-		if(strcmp(argv[1], kEncryptModes[0]) == 0 || strcmp(argv[1], kEncryptModes[1]) == 0)
+		// Parse the command line arguments
+		retStatus = parseArgs(argv, &infilename, &cryptoMode);
+
+		// Check the return status indicating the command line arguments are valid
+		if(!retStatus) // Invalid args
 		{
-			// Check if a filename was supplied
-			if(argv[2] != NULL)
-			{
-				// Allocate memory and store the crypto mode and filename
-				allocateMem(&cryptoMode, argv[1]);
-				allocateMem(&filename, argv[2]);
-			}
-			else
-			{
-				// No file name supplied, inform user. End program
-				printf("Must supply a filename!\n");
-			}
+			printf("Must enter a filename!\n");
 		}
-		else
+		else // Valid args
 		{
-			// No crypto mode specified, set defaults
-			allocateMem(&cryptoMode, kEncryptModes[0]);
-			allocateMem(&filename, argv[1]);
-		}
-		
-		// Check if the memory was allocated correctly
-		if(cryptoMode != NULL && filename != NULL)
-		{	
-			// Try to open the desired file with read/write privileges
-			fPtr = fopen(filename, "r+");
-			
-			// Check if the file opened successfully
-			if(fPtr == NULL) // File failed to open
+			// Determine the cryptography mode
+			if(cryptoMode == 1) // Encrypt
 			{
-				// Inform user of the error
-				printf("Error opening the file\n");
+				// Get the full name of the encrypted file
+				outfilename = getOutfilename(infilename, cryptoMode);
+
+				// Encrypt the file
+				encryptFile(infilename, outfilename);
 			}
-			else // File opened successfully
+			else // Decrypt
 			{
-				// Trim the file extension off of the filename supplied if there is one
-				parseFileExtension(&filename, filename);
-				
-				// Encrypt or decrypt the file as necessary
-				if(strcmp(cryptoMode, kEncryptModes[0]) == 0)
-				{
-					encryptFile(fPtr, filename);
-				}
-				else
-				{
-					//decryptFile(filename, fPtr);
-				}
-				
-				// Free the file pointer, close the file stream and flush any buffers
-				fclose(fPtr);
+				// Get the full name of the decrypted file
+				outfilename = getOutfilename(infilename, cryptoMode);
+
+				// Decrypt the file
+				decryptFile(infilename, outfilename);
 			}
-			
-			printf("%s %s at line 38 \n", cryptoMode, filename);	
-			
-			// Free all allocated memory
-			free(cryptoMode);
-			free(filename);
+			// Free the allocated memory
+			free(outfilename);
 		}
 	}
-	
 	return 0;
 }
 
-void allocateMem(char** destination, const char* source)
+// FUNCTION: 	int parseArgs(char* argv[], char** infilename, int* cryptoMode))
+// DESCRIPTION: This function takes in the command line arguments array and parses through them to ensure they are valid and stores them appropriately upon successful validation
+// PARAMETERS:  char* argv[]: Arguments array supplied by the user in the CLI
+//			    char** infilename: Variable containing the address of the infilename variable
+//			    int* cryptoMode: Variable containing the address of the cryptoMode variable
+// RETURNS: 	int retStatus: Returns 1 if the args are successfully parsed and validated
+//						   	   Returns 0 if the args entered are not validated
+int parseArgs(char* argv[], char** infilename, int* cryptoMode)
 {
-	*destination = (char*)malloc(sizeof(char) * strlen(source) + 1);
-	strcpy(*destination, source);
+	int retStatus = 0;
+
+	// Check if the entered argument matches either of the allowed switches
+	if(strcmp(argv[1], kEncrypt) == 0) // Check if encrypt is desired
+	{
+		*cryptoMode = 1; // Set the value of the crypto mode to 1 indicating encryption
+
+		if(argv[2] != NULL) // Check if the user supplied a filename
+		{
+			*infilename = argv[2]; // Update the value of the infilename
+			retStatus = 1; // Update retStatus indicating successful arg validation
+		}
+	}
+	else if(strcmp(argv[1], kDecrypt) == 0) // Check if decrypt is desired
+	{
+		*cryptoMode = 2; // Set the value of the crypto mode to 2 indicating decryption
+
+		if(argv[2] != NULL) // Check if the user supplied a filename
+		{
+			*infilename = argv[2];
+			retStatus = 1;
+		}
+	}
+	else // Only filename supplied
+	{
+		*cryptoMode = 1; // Assume desired crypto mode is encryption
+		*infilename = argv[1]; 
+		retStatus = 1;
+	}
+	return retStatus; // Return the parse status
 }
 
-void parseFileExtension(char** filename, char* source)
+// FUNCTION: 	char* getOutfilename(char* infilename, int cryptoMode)
+// DESCRIPTION: 
+// PARAMETERS:  char* infilename:
+//			    int cryptoMode:
+// RETURNS: 	char* temp:
+char* getOutfilename(char* infilename, int cryptoMode)
 {
-	char* token = strtok(source, ".");
-	
-	if(token != NULL)
+	char* temp = (char*)malloc(sizeof(char) * strlen(infilename) + 1);
+	strcpy(temp, infilename);
+	char* token = strtok(temp, ".");
+
+	if(token == NULL)
 	{
-		strcpy(*filename, token);
+		if(cryptoMode == 1)
+		{
+			strcat(temp, kEncryptExtension);
+		}
+		else
+		{
+			strcat(temp, kDecryptExtension);
+		}
 	}
-	else{
-		strcpy(*filename, source);
+	else
+	{
+		if(cryptoMode == 1)
+		{
+			strcpy(temp, strcat(token, kEncryptExtension));
+		}
+		else
+		{
+			strcpy(temp, strcat(token, kDecryptExtension));
+		}
 	}
+	return temp;
 }
+
 
 
