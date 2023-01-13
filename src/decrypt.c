@@ -5,7 +5,7 @@ void decryptFile(char* infilename, char* outfilename)
 	FILE* infile = NULL;
 	FILE* outfile = NULL;
 	char buffer[kMaxArrSize] = "";
-	char outChar = 0;
+	unsigned char outChar = 0;
 	int convertedInt = 0;
 	char c1 = 0;
 	char c2 = 0;
@@ -21,18 +21,51 @@ void decryptFile(char* infilename, char* outfilename)
 			{
         		c1 = buffer[i];
 				c2 = buffer[i + 1];
-				printf("%c%c\n", c1, c2);
+				//printf("%c%c\n", c1, c2);
 
 				if(c1 == 'T' && c2 == 'T')
 				{
-					printf("Found a tab\n");
+					fprintf(outfile, "\t");
 				}
-    		}
+				else if(c1 == '\n' || c2 == '\n')
+				{
+					fprintf(outfile, "\n");
+				}
+				else
+				{
+					if(isalpha(c1) != 0)
+					{
+						convertedInt = hexToInt(c1);
+						outChar = (c1 - '0') * 16;
+						printf("Line 40: %d\n", outChar);
+					}
+					else
+					{
+						outChar = (c1 - '0') * 16;
+						printf("Line 45: %d\n", outChar);
+					}
 
-    		if (strlen(buffer) % 2 != 0) 
-			{
-        		c1 = buffer[strlen(buffer) - 1];
-				printf("%c\n", c1);
+					if(isalpha(c2) != 0)
+					{
+						convertedInt = hexToInt(c2);
+						outChar = outChar + convertedInt;
+						printf("Line 52: %d\n", outChar);
+					}
+					else
+					{
+						outChar = (outChar - '0') + c2;
+						printf("Line 57: %d\n", outChar);
+					}
+
+					outChar = outChar + 16;
+
+					if(outChar > 127)
+					{
+						outChar = (outChar - 144) + 32;
+					}
+					
+					fprintf(outfile,"%c", outChar);	
+				}
     		}
 		}
 
