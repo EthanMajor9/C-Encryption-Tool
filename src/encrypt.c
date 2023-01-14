@@ -4,7 +4,7 @@ void encryptFile(char* infilename, char* outfilename)
 {
 	FILE* infile = NULL;
 	FILE* outfile = NULL;
-	char buffer[kMaxArrSize] = "";
+	char buffer[MAX_BUFFER_SIZE] = "";
 	unsigned char outChar = ' ';
 
 	infile = fopen(infilename, "r");
@@ -16,35 +16,32 @@ void encryptFile(char* infilename, char* outfilename)
 		{
 			for(int i = 0; i < strlen(buffer); i++)
 			{
-				if(buffer[i] == 9)
+				switch(buffer[i])
 				{
-					fprintf(outfile, "%c%c", 'T', 'T');
-				}
-				else if(buffer[i] == 10)
-				{
-					fprintf(outfile, "\n");
-				}
-				else
-				{
-					outChar = buffer[i] - 16;
-
-					if(outChar < 32)
-					{
-						outChar = (outChar - 32) + 144;
-					}
-
-					fprintf(outfile, "%02X", outChar);
+					// Character read is a tab
+					case 9:
+						fprintf(outfile, "%c%c", 'T', 'T');
+						break;
+					// Character read is a carriage return
+					case 10:
+						fprintf(outfile, "\n");
+						break;
+					// Any other character was read
+					default:
+						outChar = buffer[i] - 16;
+						outChar = (outChar < 32) ? (outChar - 32) + 144 : outChar;
+						fprintf(outfile, "%02X", outChar);
+						break;
 				}
 			}
 		}
+		fclose(infile);
+		fclose(outfile);
 	}
 	else
 	{
 		printf("There was an error opening the file!\n");
 	}
-
-	fclose(infile);
-	fclose(outfile);
 }
 
 

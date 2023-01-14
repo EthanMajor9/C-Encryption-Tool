@@ -13,11 +13,11 @@ int main(int argc, char* argv[])
 {
 	char* infilename = NULL;
 	char* outfilename = NULL;
-	int cryptoMode = 0;
-	int retStatus = 0;
+	int cryptoMode = ENCRYPT_MODE;
+	int retStatus = FAILURE;
 	
 	// Check if any command line args were supplied
-	if(argc == 1)
+	if(argc < 2)
 	{
 		printf("Usage: <mode> <filename>\n");
 	}
@@ -33,22 +33,18 @@ int main(int argc, char* argv[])
 		}
 		else // Valid args
 		{
+			outfilename = getOutfilename(infilename, cryptoMode);
 			// Determine the cryptography mode
-			if(cryptoMode == 1) // Encrypt
+			switch(cryptoMode)
 			{
-				// Get the full name of the encrypted file
-				outfilename = getOutfilename(infilename, cryptoMode);
-
-				// Encrypt the file
-				encryptFile(infilename, outfilename);
-			}
-			else // Decrypt
-			{
-				// Get the full name of the decrypted file
-				outfilename = getOutfilename(infilename, cryptoMode);
-
-				// Decrypt the file
-				decryptFile(infilename, outfilename);
+				case ENCRYPT_MODE:
+					// Encrypt the file
+					encryptFile(infilename, outfilename);
+					break;
+				case DECRYPT_MODE:
+					// Decrypt the file
+					decryptFile(infilename, outfilename);
+					break;	
 			}
 			// Free the allocated memory
 			free(outfilename);
@@ -66,35 +62,28 @@ int main(int argc, char* argv[])
 //						   	   Returns 0 if the args entered are not validated
 int parseArgs(char* argv[], char** infilename, int* cryptoMode)
 {
-	int retStatus = 0;
+	int retStatus = FAILURE;
 
 	// Check if the entered argument matches either of the allowed switches
-	if(strcmp(argv[1], kEncrypt) == 0) // Check if encrypt is desired
+	if(strcmp(argv[1], ENCRYPT_SWITCH) == 0) // Check if encrypt is desired
 	{
-		*cryptoMode = 1; // Set the value of the crypto mode to 1 indicating encryption
-
-		if(argv[2] != NULL) // Check if the user supplied a filename
-		{
-			*infilename = argv[2]; // Update the value of the infilename
-			retStatus = 1; // Update retStatus indicating successful arg validation
-		}
+		*cryptoMode = ENCRYPT_MODE; // Set the value of the crypto mode to 1 indicating encryption
+		*infilename = argv[2]; // Update the value of the infilename
+		retStatus = SUCCESS;
 	}
-	else if(strcmp(argv[1], kDecrypt) == 0) // Check if decrypt is desired
+	else if(strcmp(argv[1], DECRYPT_SWITCH) == 0) // Check if decrypt is desired
 	{
-		*cryptoMode = 2; // Set the value of the crypto mode to 2 indicating decryption
-
-		if(argv[2] != NULL) // Check if the user supplied a filename
-		{
-			*infilename = argv[2];
-			retStatus = 1;
-		}
+		*cryptoMode = DECRYPT_MODE; // Set the value of the crypto mode to 2 indicating decryption
+		*infilename = argv[2];
+		retStatus = SUCCESS;
 	}
 	else // Only filename supplied
 	{
-		*cryptoMode = 1; // Assume desired crypto mode is encryption
+		*cryptoMode = ENCRYPT_MODE; // Assume desired crypto mode is encryption
 		*infilename = argv[1]; 
-		retStatus = 1;
+		retStatus = SUCCESS;
 	}
+	
 	return retStatus; // Return the parse status
 }
 
@@ -102,37 +91,27 @@ int parseArgs(char* argv[], char** infilename, int* cryptoMode)
 // DESCRIPTION: 
 // PARAMETERS:  char* infilename:
 //			    int cryptoMode:
-// RETURNS: 	char* temp:
+// RETURNS: 	char* outfilename:
+
 char* getOutfilename(char* infilename, int cryptoMode)
 {
-	char* temp = (char*)malloc(sizeof(char) * strlen(infilename) + 1);
-	strcpy(temp, infilename);
-	char* token = strtok(temp, ".");
+    char* outfilename = NULL;
+    char* extension = (cryptoMode == ENCRYPT_MODE) ? ENCRYPT_EXTENSION : DECRYPT_EXTENSION;
+    char* dot = strrchr(infilename, '.');
 
-	if(token == NULL)
+    if (dot == NULL) 
 	{
-		if(cryptoMode == 1)
-		{
-			strcat(temp, kEncryptExtension);
-		}
-		else
-		{
-			strcat(temp, kDecryptExtension);
-		}
-	}
-	else
+        outfilename = (char*)malloc(strlen(infilename) + strlen(extension) + 1);
+        snprintf(outfilename, strlen(infilename) + strlen(extension) + 1, "%s%s", infilename, extension);
+    } 
+	else 
 	{
-		if(cryptoMode == 1)
-		{
-			strcpy(temp, strcat(token, kEncryptExtension));
-		}
-		else
-		{
-			strcpy(temp, strcat(token, kDecryptExtension));
-		}
-	}
-	return temp;
+        outfilename = (char*)malloc(dot - infilename + strlen(extension) + 1);
+        snprintf(outfilename, dot - infilename + strlen(extension) + 1, "%.*s%s", (int)(dot - infilename), infilename, extension);
+    }
+    return outfilename;
 }
+
 
 
 
